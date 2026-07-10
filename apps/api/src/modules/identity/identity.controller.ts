@@ -1,8 +1,10 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
 import { Request } from 'express';
+import { Auth } from '../../common/decorators/auth.decorator';
+import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { TenantContext } from '../../common/tenant/tenant-context';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IdentityService } from './identity.service';
 
 @Controller('identity')
@@ -21,8 +23,8 @@ export class IdentityController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  me(@Req() req: Request) {
-    return req.user;
+  @Auth()
+  me(@Req() req: Request, @CurrentTenant() tenant: TenantContext) {
+    return { user: req.user, tenant };
   }
 }
