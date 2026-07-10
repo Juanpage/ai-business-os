@@ -1,0 +1,21 @@
+# Dependencias y builds
+node_modules
+dist
+.next
+out
+build
+coverage
+
+# Turbo / cache
+.turbo
+.cache
+
+# Prisma (client generado y migraciones SQL)
+**/node_modules/.prisma
+apps/api/prisma/migrations
+
+# Lockfiles y generados
+pnpm-lock.yaml
+
+# Husky interno
+.husky/_
