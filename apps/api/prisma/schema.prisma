@@ -407,6 +407,9 @@ model Reservation {
   venueId    String            @map("venue_id") @db.Uuid
   customerId String?           @map("customer_id") @db.Uuid
   tableId    String?           @map("table_id") @db.Uuid
+  reservedAt DateTime          @map("reserved_at")
+  partySize  Int               @map("party_size")
+  notes      String?
   status     ReservationStatus @default(pending)
 
   createdAt DateTime  @default(now()) @map("created_at")
