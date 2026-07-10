@@ -1,0 +1,36 @@
+{
+  "name": "ai-business-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise Multi-Tenant AI SaaS Platform",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "husky": "^9.1.6"
+  },
+  "dependencies": {},
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "bcrypt",
+      "prisma",
+      "unrs-resolver"
+    ]
+  }
+}

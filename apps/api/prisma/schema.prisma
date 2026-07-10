@@ -1,0 +1,559 @@
+// ============================================================================
+// AI Business OS — Prisma Schema
+// Vertical: Bar / Discoteca
+//
+// Multi-tenancy: aislamiento por tenant_id (row-level), NO schema-per-tenant.
+// Jerarquia: Tenant (empresa que paga) -> Venue (local fisico, N por tenant).
+//
+// Convenciones de todas las tablas de negocio:
+//   - id         : uuid (clave primaria)
+//   - tenantId   : aislamiento por tenant (venue_id nullable donde aplique)
+//   - status     : estado del registro (enum por dominio)
+//   - createdAt  : fecha de creacion
+//   - updatedAt  : fecha de ultima actualizacion
+//   - deletedAt  : soft delete (null = activo)
+//
+// Este schema define UNICAMENTE la estructura de datos. Sin logica de negocio.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum TenantStatus {
+  active
+  suspended
+  cancelled
+}
+
+enum VenueStatus {
+  active
+  inactive
+  archived
+}
+
+enum PlanStatus {
+  active
+  inactive
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  cancelled
+  expired
+}
+
+enum UserStatus {
+  active
+  invited
+  suspended
+}
+
+enum VenueRole {
+  owner
+  admin
+  staff
+}
+
+enum CategoryStatus {
+  active
+  inactive
+  archived
+}
+
+enum ProductStatus {
+  active
+  inactive
+  archived
+}
+
+enum TableStatus {
+  available
+  occupied
+  reserved
+  disabled
+}
+
+enum CustomerStatus {
+  active
+  inactive
+  blocked
+}
+
+enum ReservationStatus {
+  pending
+  confirmed
+  seated
+  cancelled
+  no_show
+  completed
+}
+
+enum EventStatus {
+  draft
+  scheduled
+  published
+  cancelled
+  finished
+}
+
+enum PromotionStatus {
+  draft
+  active
+  paused
+  expired
+}
+
+enum OrderStatus {
+  open
+  pending_payment
+  paid
+  cancelled
+  refunded
+}
+
+enum OrderItemStatus {
+  pending
+  preparing
+  served
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  authorized
+  paid
+  failed
+  refunded
+}
+
+enum PaymentMethod {
+  cash
+  card
+  transfer
+}
+
+enum AIGenerationStatus {
+  pending
+  success
+  error
+}
+
+// ============================================================================
+// NUCLEO MULTI-TENANT
+// ============================================================================
+
+model Tenant {
+  id     String       @id @default(uuid()) @db.Uuid
+  name   String
+  slug   String       @unique
+  status TenantStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  venues        Venue[]
+  subscriptions Subscription[]
+  users         User[]
+  venueRoles    UserVenueRole[]
+  categories    Category[]
+  products      Product[]
+  tables        Table[]
+  customers     Customer[]
+  reservations  Reservation[]
+  events        Event[]
+  promotions    Promotion[]
+  orders        Order[]
+  orderItems    OrderItem[]
+  payments      Payment[]
+  aiLogs        AIGenerationLog[]
+
+  @@map("tenants")
+}
+
+model Venue {
+  id       String      @id @default(uuid()) @db.Uuid
+  tenantId String      @map("tenant_id") @db.Uuid
+  name     String
+  slug     String
+  status   VenueStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  venueRoles   UserVenueRole[]
+  categories   Category[]
+  products     Product[]
+  tables       Table[]
+  customers    Customer[]
+  reservations Reservation[]
+  events       Event[]
+  promotions   Promotion[]
+  orders       Order[]
+  orderItems   OrderItem[]
+  payments     Payment[]
+  aiLogs       AIGenerationLog[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@map("venues")
+}
+
+// ============================================================================
+// FACTURACION (PLANES Y SUSCRIPCIONES)
+// ============================================================================
+
+model Plan {
+  id     String     @id @default(uuid()) @db.Uuid
+  name   String
+  code   String     @unique
+  status PlanStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id       String             @id @default(uuid()) @db.Uuid
+  tenantId String             @map("tenant_id") @db.Uuid
+  planId   String             @map("plan_id") @db.Uuid
+  status   SubscriptionStatus @default(trialing)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+  @@index([planId])
+  @@map("subscriptions")
+}
+
+// ============================================================================
+// IDENTIDAD (USUARIOS Y ROLES POR VENUE)
+// ============================================================================
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  tenantId     String     @map("tenant_id") @db.Uuid
+  email        String
+  passwordHash String     @map("password_hash")
+  status       UserStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant     Tenant            @relation(fields: [tenantId], references: [id])
+  venueRoles UserVenueRole[]
+  aiLogs     AIGenerationLog[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+model UserVenueRole {
+  id       String     @id @default(uuid()) @db.Uuid
+  tenantId String     @map("tenant_id") @db.Uuid
+  venueId  String?    @map("venue_id") @db.Uuid
+  userId   String     @map("user_id") @db.Uuid
+  role     VenueRole
+  status   UserStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  venue  Venue? @relation(fields: [venueId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, venueId, role])
+  @@index([tenantId])
+  @@index([venueId])
+  @@index([userId])
+  @@map("user_venue_roles")
+}
+
+// ============================================================================
+// CATALOGO (CATEGORIAS Y PRODUCTOS)
+// ============================================================================
+
+model Category {
+  id       String         @id @default(uuid()) @db.Uuid
+  tenantId String         @map("tenant_id") @db.Uuid
+  venueId  String?        @map("venue_id") @db.Uuid
+  name     Json
+  status   CategoryStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  venue    Venue?    @relation(fields: [venueId], references: [id])
+  products Product[]
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@map("categories")
+}
+
+model Product {
+  id          String        @id @default(uuid()) @db.Uuid
+  tenantId    String        @map("tenant_id") @db.Uuid
+  venueId     String?       @map("venue_id") @db.Uuid
+  categoryId  String?       @map("category_id") @db.Uuid
+  name        Json
+  description Json?
+  status      ProductStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  venue      Venue?      @relation(fields: [venueId], references: [id])
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@index([categoryId])
+  @@map("products")
+}
+
+// ============================================================================
+// MESAS Y CLIENTES
+// ============================================================================
+
+// CustomerBar -> Table (mesa fisica del local)
+model Table {
+  id       String      @id @default(uuid()) @db.Uuid
+  tenantId String      @map("tenant_id") @db.Uuid
+  venueId  String      @map("venue_id") @db.Uuid
+  code     String
+  status   TableStatus @default(available)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  venue        Venue         @relation(fields: [venueId], references: [id])
+  reservations Reservation[]
+  orders       Order[]
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@map("tables")
+}
+
+model Customer {
+  id       String         @id @default(uuid()) @db.Uuid
+  tenantId String         @map("tenant_id") @db.Uuid
+  venueId  String?        @map("venue_id") @db.Uuid
+  status   CustomerStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  venue        Venue?        @relation(fields: [venueId], references: [id])
+  reservations Reservation[]
+  orders       Order[]
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@map("customers")
+}
+
+// ============================================================================
+// RESERVAS, EVENTOS Y PROMOCIONES
+// ============================================================================
+
+model Reservation {
+  id         String            @id @default(uuid()) @db.Uuid
+  tenantId   String            @map("tenant_id") @db.Uuid
+  venueId    String            @map("venue_id") @db.Uuid
+  customerId String?           @map("customer_id") @db.Uuid
+  tableId    String?           @map("table_id") @db.Uuid
+  status     ReservationStatus @default(pending)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  venue    Venue     @relation(fields: [venueId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+  table    Table?    @relation(fields: [tableId], references: [id])
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@index([customerId])
+  @@index([tableId])
+  @@map("reservations")
+}
+
+model Event {
+  id       String      @id @default(uuid()) @db.Uuid
+  tenantId String      @map("tenant_id") @db.Uuid
+  venueId  String      @map("venue_id") @db.Uuid
+  status   EventStatus @default(draft)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  venue  Venue  @relation(fields: [venueId], references: [id])
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@map("events")
+}
+
+model Promotion {
+  id       String          @id @default(uuid()) @db.Uuid
+  tenantId String          @map("tenant_id") @db.Uuid
+  venueId  String?         @map("venue_id") @db.Uuid
+  status   PromotionStatus @default(draft)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  venue  Venue? @relation(fields: [venueId], references: [id])
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@map("promotions")
+}
+
+// ============================================================================
+// ORDENES, ITEMS Y PAGOS
+// ============================================================================
+
+model Order {
+  id         String      @id @default(uuid()) @db.Uuid
+  tenantId   String      @map("tenant_id") @db.Uuid
+  venueId    String      @map("venue_id") @db.Uuid
+  customerId String?     @map("customer_id") @db.Uuid
+  tableId    String?     @map("table_id") @db.Uuid
+  status     OrderStatus @default(open)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant   Tenant      @relation(fields: [tenantId], references: [id])
+  venue    Venue       @relation(fields: [venueId], references: [id])
+  customer Customer?   @relation(fields: [customerId], references: [id])
+  table    Table?      @relation(fields: [tableId], references: [id])
+  items    OrderItem[]
+  payments Payment[]
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@index([customerId])
+  @@index([tableId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String          @id @default(uuid()) @db.Uuid
+  tenantId  String          @map("tenant_id") @db.Uuid
+  venueId   String?         @map("venue_id") @db.Uuid
+  orderId   String          @map("order_id") @db.Uuid
+  productId String?         @map("product_id") @db.Uuid
+  status    OrderItemStatus @default(pending)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  venue   Venue?   @relation(fields: [venueId], references: [id])
+  order   Order    @relation(fields: [orderId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Payment {
+  id       String        @id @default(uuid()) @db.Uuid
+  tenantId String        @map("tenant_id") @db.Uuid
+  venueId  String?       @map("venue_id") @db.Uuid
+  orderId  String?       @map("order_id") @db.Uuid
+  method   PaymentMethod
+  provider String?
+  status   PaymentStatus @default(pending)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  venue  Venue? @relation(fields: [venueId], references: [id])
+  order  Order? @relation(fields: [orderId], references: [id])
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@index([orderId])
+  @@map("payments")
+}
+
+// ============================================================================
+// IA (REGISTRO DE GENERACIONES)
+// ============================================================================
+
+model AIGenerationLog {
+  id       String             @id @default(uuid()) @db.Uuid
+  tenantId String             @map("tenant_id") @db.Uuid
+  venueId  String?            @map("venue_id") @db.Uuid
+  userId   String?            @map("user_id") @db.Uuid
+  status   AIGenerationStatus @default(pending)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  venue  Venue? @relation(fields: [venueId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([venueId])
+  @@index([userId])
+  @@map("ai_generation_logs")
+}

@@ -1,0 +1,49 @@
+# ============================================================================
+# AI Business OS — .dockerignore
+# Evita copiar artefactos locales al contexto de build.
+# CRITICO: node_modules local contiene binarios nativos (bcrypt) de Windows
+# que romperian el contenedor Linux; se reinstalan dentro de la imagen.
+# ============================================================================
+
+# Dependencias
+node_modules
+**/node_modules
+
+# Builds
+dist
+**/dist
+.next
+**/.next
+out
+**/out
+build
+**/build
+
+# Turbo / cache
+.turbo
+**/.turbo
+.cache
+
+# Prisma client generado (se regenera en la imagen)
+**/@prisma/client
+
+# Git y editores
+.git
+.gitignore
+.idea
+.vscode
+
+# Entorno (se inyecta via docker-compose, no via COPY)
+.env
+**/.env
+*.local
+
+# Logs y temporales
+logs
+*.log
+tmp
+temp
+
+# Docs y assets no necesarios para build
+docs
+assets

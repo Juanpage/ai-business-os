@@ -1,0 +1,21 @@
+# ============================================================================
+# AI Business OS — .gitattributes
+# Normaliza los finales de linea a LF en el repositorio (coherente con
+# .editorconfig: end_of_line = lf). Evita conversiones CRLF en Windows.
+# ============================================================================
+
+# Por defecto: deteccion automatica de texto, almacenado con LF.
+* text=auto eol=lf
+
+# Binarios: nunca normalizar.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Lockfile: texto con LF.
+pnpm-lock.yaml text eol=lf
