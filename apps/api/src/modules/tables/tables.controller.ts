@@ -16,19 +16,20 @@ import { Auth } from '../../common/decorators/auth.decorator';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { TenantContext } from '../../common/tenant/tenant-context';
-import { CreateCustomerDto } from './dto/create-customer.dto';
-import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { CustomersService } from './customers.service';
+import { CreateTableDto } from './dto/create-table.dto';
+import { UpdateTableDto } from './dto/update-table.dto';
+import { TablesService } from './tables.service';
 
-@Controller('customers')
+@Controller('tables')
 @Auth()
-export class CustomersController {
-  constructor(private readonly customersService: CustomersService) {}
+export class TablesController {
+  constructor(private readonly tablesService: TablesService) {}
 
-  // Operativo: el staff registra y actualiza clientes durante el servicio.
+  // Estructural: crear/eliminar mesas es de owner/admin.
   @Post()
-  create(@CurrentTenant() ctx: TenantContext, @Body() dto: CreateCustomerDto) {
-    return this.customersService.create(ctx, dto);
+  @Roles(VenueRole.owner, VenueRole.admin)
+  create(@CurrentTenant() ctx: TenantContext, @Body() dto: CreateTableDto) {
+    return this.tablesService.create(ctx, dto);
   }
 
   @Get()
@@ -36,28 +37,28 @@ export class CustomersController {
     @CurrentTenant() ctx: TenantContext,
     @Query('venueId', new ParseUUIDPipe({ optional: true })) venueId?: string,
   ) {
-    return this.customersService.findAll(ctx, venueId);
+    return this.tablesService.findAll(ctx, venueId);
   }
 
   @Get(':id')
   findOne(@CurrentTenant() ctx: TenantContext, @Param('id', ParseUUIDPipe) id: string) {
-    return this.customersService.findOne(ctx, id);
+    return this.tablesService.findOne(ctx, id);
   }
 
+  // Operativo: cambiar estado/codigo de mesa lo puede hacer el staff en servicio.
   @Patch(':id')
   update(
     @CurrentTenant() ctx: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateCustomerDto,
+    @Body() dto: UpdateTableDto,
   ) {
-    return this.customersService.update(ctx, id, dto);
+    return this.tablesService.update(ctx, id, dto);
   }
 
-  // Eliminar un registro de cliente queda restringido a owner/admin.
   @Delete(':id')
   @Roles(VenueRole.owner, VenueRole.admin)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@CurrentTenant() ctx: TenantContext, @Param('id', ParseUUIDPipe) id: string) {
-    await this.customersService.remove(ctx, id);
+    await this.tablesService.remove(ctx, id);
   }
 }

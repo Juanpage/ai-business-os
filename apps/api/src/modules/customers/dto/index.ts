@@ -1,1 +1,2 @@
-// DTOs de customers — se definirán junto con las reglas de negocio del módulo.
+export * from './create-customer.dto';
+export * from './update-customer.dto';

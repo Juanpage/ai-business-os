@@ -374,10 +374,14 @@ model Table {
 }
 
 model Customer {
-  id       String         @id @default(uuid()) @db.Uuid
-  tenantId String         @map("tenant_id") @db.Uuid
-  venueId  String?        @map("venue_id") @db.Uuid
-  status   CustomerStatus @default(active)
+  id         String         @id @default(uuid()) @db.Uuid
+  tenantId   String         @map("tenant_id") @db.Uuid
+  venueId    String?        @map("venue_id") @db.Uuid
+  fullName   String         @map("full_name")
+  email      String?
+  phone      String?
+  documentId String?        @map("document_id")
+  status     CustomerStatus @default(active)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")

@@ -7,6 +7,7 @@ import { VenuesModule } from './modules/venues/venues.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { ProductsModule } from './modules/products/products.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { TablesModule } from './modules/tables/tables.module';
 import { ReservationsModule } from './modules/reservations/reservations.module';
 import { EventsModule } from './modules/events/events.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
@@ -24,6 +25,7 @@ import { AiModule } from './modules/ai/ai.module';
     IdentityModule,
     ProductsModule,
     CustomersModule,
+    TablesModule,
     ReservationsModule,
     EventsModule,
     PromotionsModule,
