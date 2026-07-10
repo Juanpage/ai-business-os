@@ -1,1 +1,2 @@
-// DTOs de venues — se definirán junto con las reglas de negocio del módulo.
+export * from './create-venue.dto';
+export * from './update-venue.dto';

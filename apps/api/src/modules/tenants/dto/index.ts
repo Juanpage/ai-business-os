@@ -1,1 +1,1 @@
-// DTOs de tenants — se definirán junto con las reglas de negocio del módulo.
+export * from './update-tenant.dto';
