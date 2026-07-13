@@ -115,6 +115,11 @@ enum PromotionStatus {
   expired
 }
 
+enum PromotionDiscountType {
+  percentage
+  fixed
+}
+
 enum OrderStatus {
   open
   pending_payment
@@ -430,10 +435,16 @@ model Reservation {
 }
 
 model Event {
-  id       String      @id @default(uuid()) @db.Uuid
-  tenantId String      @map("tenant_id") @db.Uuid
-  venueId  String      @map("venue_id") @db.Uuid
-  status   EventStatus @default(draft)
+  id          String      @id @default(uuid()) @db.Uuid
+  tenantId    String      @map("tenant_id") @db.Uuid
+  venueId     String      @map("venue_id") @db.Uuid
+  name        Json
+  description Json?
+  startsAt    DateTime    @map("starts_at")
+  endsAt      DateTime?   @map("ends_at")
+  capacity    Int?
+  coverPrice  Decimal?    @map("cover_price") @db.Decimal(12, 2)
+  status      EventStatus @default(draft)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -448,10 +459,16 @@ model Event {
 }
 
 model Promotion {
-  id       String          @id @default(uuid()) @db.Uuid
-  tenantId String          @map("tenant_id") @db.Uuid
-  venueId  String?         @map("venue_id") @db.Uuid
-  status   PromotionStatus @default(draft)
+  id            String                @id @default(uuid()) @db.Uuid
+  tenantId      String                @map("tenant_id") @db.Uuid
+  venueId       String?               @map("venue_id") @db.Uuid
+  name          Json
+  description   Json?
+  discountType  PromotionDiscountType @map("discount_type")
+  discountValue Decimal               @map("discount_value") @db.Decimal(12, 2)
+  startsAt      DateTime?             @map("starts_at")
+  endsAt        DateTime?             @map("ends_at")
+  status        PromotionStatus       @default(draft)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
