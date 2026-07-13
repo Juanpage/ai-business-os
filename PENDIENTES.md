@@ -50,8 +50,14 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
       Es el cobro a los tenants por usar la plataforma (no confundir con los pagos de
       órdenes de los bares).
 - [ ] **`AIGenerationLog`** — entidad/módulo aún stub; registrar generaciones de IA.
-- [ ] **Frontend real (`web`)** — hoy es solo una página en blanco con Tailwind.
-      Falta toda la UI (login, dashboard, POS, catálogo, etc.).
+- [~] **Frontend real (`web`)** — incremento 1 HECHO (2026-07-13, commit `e086547`):
+  login (JWT en localStorage) + dashboard protegido que muestra tenant/venues/carta
+  del seed + logout. `lib/api.ts` (fetch) y `lib/auth-context.tsx`. Verificado en
+  navegador + build prod + typecheck. FALTA: POS (crear órdenes), gestión de
+  catálogo/mesas/reservas desde la UI, i18n selector, etc.
+  Nota: en el navegador in-app se ve un error de consola cacheado en `/`
+  (`__webpack_require__.n`), es artefacto de caché del preview, NO del código
+  (build de producción limpio). En navegador normal / `next start` no ocurre.
 - [ ] **`apps/admin`** — carpeta reservada, vacía. Panel de administración pendiente.
 
 ## 3. Interfaces vacías A PROPÓSITO (no implementar sin indicación)
