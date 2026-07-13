@@ -113,8 +113,9 @@ frontend incremento 1 (login + dashboard).
 
 1. ~~Frontend — POS / crear órdenes~~ ✅ HECHO (commit `a4f4515`). `/dashboard/pos`:
    venue → productos → cantidades → promo → cobro → orden paid. Verificado en vivo.
-2. **[SIGUIENTE] Frontend — Gestión de catálogo**: CRUD de productos y categorías desde la UI.
-3. **Frontend — Gestión operativa**: mesas, clientes, reservas desde la UI.
+2. ~~Frontend — Gestión de catálogo~~ ✅ HECHO (commit `25b1e80`). `/dashboard/catalog`:
+   CRUD productos y categorías (modal, multiidioma es/en, borrado con modal in-app).
+3. **[SIGUIENTE] Frontend — Gestión operativa**: mesas, clientes, reservas desde la UI.
 4. **Frontend — Selector de idioma (i18n)**: aprovechar los campos multiidioma.
 5. **Ampliar cobertura de tests e2e**: reservations, tables, customers, events, promotions.
 6. **Facturación SaaS**: implementar `plans` + `subscriptions` (cobro a tenants).
