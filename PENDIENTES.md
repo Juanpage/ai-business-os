@@ -111,9 +111,9 @@ frontend incremento 1 (login + dashboard).
 
 **En cola (orden actual):**
 
-1. **[EN CURSO] Frontend — POS / crear órdenes**: elegir venue → abrir orden →
-   agregar productos → ver totales con IVA → aplicar promo → registrar pago.
-2. **Frontend — Gestión de catálogo**: CRUD de productos y categorías desde la UI.
+1. ~~Frontend — POS / crear órdenes~~ ✅ HECHO (commit `a4f4515`). `/dashboard/pos`:
+   venue → productos → cantidades → promo → cobro → orden paid. Verificado en vivo.
+2. **[SIGUIENTE] Frontend — Gestión de catálogo**: CRUD de productos y categorías desde la UI.
 3. **Frontend — Gestión operativa**: mesas, clientes, reservas desde la UI.
 4. **Frontend — Selector de idioma (i18n)**: aprovechar los campos multiidioma.
 5. **Ampliar cobertura de tests e2e**: reservations, tables, customers, events, promotions.
