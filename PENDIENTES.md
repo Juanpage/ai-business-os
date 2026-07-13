@@ -102,13 +102,27 @@ Decisiones clave: dinero siempre `Decimal` (nunca float); precio/nombre se "cong
 
 ---
 
-## Próximos pasos sugeridos (en orden)
+## Cola de desarrollo activa (roadmap — trabajar en orden)
 
-1. ~~Tests automatizados (base)~~ ✅ HECHO.
-2. ~~Aplicar promociones a órdenes~~ ✅ HECHO.
-3. ~~Seed demo~~ ✅ HECHO (commit `2e02dd3`). `prisma/seed.ts`, idempotente por
-   slug `bar-demo`. Login `owner@demo.com` / `demo1234`. Correr:
-   `pnpm --filter @ai-business-os/api prisma:seed`.
-4. ~~Remoto git + push~~ ✅ HECHO (origin en GitHub).
-5. **Frontend real / facturación SaaS.** ← siguiente
-6. Ampliar cobertura de tests a los módulos restantes.
+> Toda sugerencia que surja se agrega AQUÍ para no perderla. Se van tomando en orden.
+
+**Hitos completados:** tests e2e base · promos en órdenes · seed demo · remoto GitHub ·
+frontend incremento 1 (login + dashboard).
+
+**En cola (orden actual):**
+
+1. **[EN CURSO] Frontend — POS / crear órdenes**: elegir venue → abrir orden →
+   agregar productos → ver totales con IVA → aplicar promo → registrar pago.
+2. **Frontend — Gestión de catálogo**: CRUD de productos y categorías desde la UI.
+3. **Frontend — Gestión operativa**: mesas, clientes, reservas desde la UI.
+4. **Frontend — Selector de idioma (i18n)**: aprovechar los campos multiidioma.
+5. **Ampliar cobertura de tests e2e**: reservations, tables, customers, events, promotions.
+6. **Facturación SaaS**: implementar `plans` + `subscriptions` (cobro a tenants).
+7. **Panel admin (`apps/admin`)**: back-office multi-tenant.
+8. **Endurecimiento**: máquina de estados de `status`, solapamiento de reservas,
+   uniques (`tables[venueId,code]`, `customers.documentId`), paginación en listados.
+9. **Infra**: agregar `turbo` a devDeps raíz; hooks husky (eslint/typecheck);
+   resolver `.claude/launch.json` duplicado; reconstruir imagen Docker `api` cuando aplique.
+
+**Diferido / requiere indicación explícita:** gateway PayPhone, proveedor de IA,
+`AIGenerationLog`.
