@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
@@ -83,12 +84,20 @@ export default function DashboardPage() {
             <h1 className="text-lg font-semibold text-gray-900">{tenant?.name ?? 'Dashboard'}</h1>
             <p className="text-xs text-gray-500">{user.email}</p>
           </div>
-          <button
-            onClick={onLogout}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Cerrar sesion
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/pos"
+              className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              Punto de venta
+            </Link>
+            <button
+              onClick={onLogout}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              Cerrar sesion
+            </button>
+          </div>
         </div>
       </header>
 
