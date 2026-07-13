@@ -21,9 +21,9 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
 
 ## 1. Pendientes de infraestructura / entorno
 
-- [ ] **Remoto git + push** — POSPUESTO por decisión del usuario (desde 2026-07-10).
-      Requiere que el usuario cree el repo remoto vacío (GitHub/GitLab) y comparta la URL.
-      Hay 10 commits locales sin subir.
+- [x] **Remoto git + push** — ✅ HECHO (2026-07-13). Remoto `origin`:
+      https://github.com/Juanpage/ai-business-os · rama `main` sincronizada.
+      Recordar `git push` tras cada commit nuevo.
 - [ ] **Docker desincronizado** — los contenedores `aibos-api`/`aibos-web` están **parados**
       a favor de los dev servers. La imagen `aibos-api` quedaría desactualizada si se
       reconstruye. Además, al encender Docker Desktop se reinician solos
@@ -103,6 +103,6 @@ Decisiones clave: dinero siempre `Decimal` (nunca float); precio/nombre se "cong
 3. ~~Seed demo~~ ✅ HECHO (commit `2e02dd3`). `prisma/seed.ts`, idempotente por
    slug `bar-demo`. Login `owner@demo.com` / `demo1234`. Correr:
    `pnpm --filter @ai-business-os/api prisma:seed`.
-4. **Remoto git + push** (cuando el usuario dé la URL). ← siguiente pendiente
-5. Frontend real / facturación SaaS.
+4. ~~Remoto git + push~~ ✅ HECHO (origin en GitHub).
+5. **Frontend real / facturación SaaS.** ← siguiente
 6. Ampliar cobertura de tests a los módulos restantes.
