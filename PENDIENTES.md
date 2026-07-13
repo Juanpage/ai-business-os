@@ -41,9 +41,11 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
 
 ## 2. Pendientes de negocio (features)
 
-- [ ] **Aplicar promociones a órdenes** — hoy `promotions` es CRUD independiente.
-      Falta la lógica de aplicar un descuento al total de una orden (qué promo aplica,
-      vigencia, tope, acumulación, recálculo del total). Es el siguiente eslabón lógico.
+- [x] **Aplicar promociones a órdenes** — ✅ HECHO (2026-07-13, commit `fdf6441`).
+      `POST/DELETE /orders/:id/promotion`. Order gana `promotionId` + `discountTotal`
+      (migr. `add_order_discount`). Una promo por orden, valida activa/vigente y
+      venue/tenant-wide, tope = subtotal, IVA sobre base descontada. Cubierto por e2e.
+      Falta (opcional): promos acumulables, promos por producto/categoría.
 - [ ] **Facturación SaaS** — módulos `plans` y `subscriptions` siguen como stubs.
       Es el cobro a los tenants por usar la plataforma (no confundir con los pagos de
       órdenes de los bares).
@@ -97,8 +99,8 @@ Decisiones clave: dinero siempre `Decimal` (nunca float); precio/nombre se "cong
 ## Próximos pasos sugeridos (en orden)
 
 1. ~~Tests automatizados (base)~~ ✅ HECHO.
-2. **Aplicar promociones a órdenes** (valor de negocio). ← siguiente
-3. Seed demo.
+2. ~~Aplicar promociones a órdenes~~ ✅ HECHO.
+3. **Seed demo.** ← siguiente
 4. Remoto git + push (cuando el usuario dé la URL).
 5. Frontend real / facturación SaaS.
 6. Ampliar cobertura de tests a los módulos restantes.
