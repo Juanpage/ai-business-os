@@ -9,9 +9,17 @@ export interface Venue {
   status: string;
 }
 
+export interface Category {
+  id: string;
+  name: Localized;
+  venueId: string | null;
+  status: string;
+}
+
 export interface Product {
   id: string;
   name: Localized;
+  description?: Localized | null;
   price: string;
   venueId: string | null;
   categoryId: string | null;
