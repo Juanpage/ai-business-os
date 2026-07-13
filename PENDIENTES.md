@@ -100,7 +100,9 @@ Decisiones clave: dinero siempre `Decimal` (nunca float); precio/nombre se "cong
 
 1. ~~Tests automatizados (base)~~ ✅ HECHO.
 2. ~~Aplicar promociones a órdenes~~ ✅ HECHO.
-3. **Seed demo.** ← siguiente
-4. Remoto git + push (cuando el usuario dé la URL).
+3. ~~Seed demo~~ ✅ HECHO (commit `2e02dd3`). `prisma/seed.ts`, idempotente por
+   slug `bar-demo`. Login `owner@demo.com` / `demo1234`. Correr:
+   `pnpm --filter @ai-business-os/api prisma:seed`.
+4. **Remoto git + push** (cuando el usuario dé la URL). ← siguiente pendiente
 5. Frontend real / facturación SaaS.
 6. Ampliar cobertura de tests a los módulos restantes.
