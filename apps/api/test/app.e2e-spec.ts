@@ -178,4 +178,69 @@ describe('Ventas: totales, IVA y pagos', () => {
       .send({ productId: product.body.id, quantity: 1 })
       .expect(409);
   });
+
+  it('promocion 20% aplicada a la orden (IVA sobre base descontada)', async () => {
+    const { accessToken } = await registerTenant('promo@test.com');
+    const auth = { Authorization: `Bearer ${accessToken}` };
+
+    const venue = await request(server())
+      .post('/api/venues')
+      .set(auth)
+      .send({ name: 'Bar Promo', taxRate: 15 })
+      .expect(201);
+
+    const product = await request(server())
+      .post('/api/products')
+      .set(auth)
+      .send({ name: { es: 'Combo' }, price: 10 })
+      .expect(201);
+
+    const promo = await request(server())
+      .post('/api/promotions')
+      .set(auth)
+      .send({
+        name: { es: '20% off' },
+        discountType: 'percentage',
+        discountValue: 20,
+        status: undefined,
+      })
+      .expect(201);
+    // La promo se crea en draft; hay que activarla.
+    await request(server())
+      .patch(`/api/promotions/${promo.body.id}`)
+      .set(auth)
+      .send({ status: 'active' })
+      .expect(200);
+
+    const order = await request(server())
+      .post('/api/orders')
+      .set(auth)
+      .send({ venueId: venue.body.id })
+      .expect(201);
+
+    await request(server())
+      .post(`/api/orders/${order.body.id}/items`)
+      .set(auth)
+      .send({ productId: product.body.id, quantity: 1 })
+      .expect(201);
+
+    // subtotal 10; descuento 20% = 2; base 8; IVA 15% = 1.20; total 9.20
+    const applied = await request(server())
+      .post(`/api/orders/${order.body.id}/promotion`)
+      .set(auth)
+      .send({ promotionId: promo.body.id })
+      .expect(201);
+    expect(Number(applied.body.subtotal)).toBe(10);
+    expect(Number(applied.body.discountTotal)).toBe(2);
+    expect(Number(applied.body.taxTotal)).toBe(1.2);
+    expect(Number(applied.body.total)).toBe(9.2);
+
+    // Quitar la promo -> vuelve a 10 / 1.50 / 11.50
+    const removed = await request(server())
+      .delete(`/api/orders/${order.body.id}/promotion`)
+      .set(auth)
+      .expect(200);
+    expect(Number(removed.body.discountTotal)).toBe(0);
+    expect(Number(removed.body.total)).toBe(11.5);
+  });
 });

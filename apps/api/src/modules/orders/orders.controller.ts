@@ -17,6 +17,7 @@ import { Auth } from '../../common/decorators/auth.decorator';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { TenantContext } from '../../common/tenant/tenant-context';
+import { ApplyPromotionDto } from './dto/apply-promotion.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrdersService } from './orders.service';
@@ -53,6 +54,21 @@ export class OrdersController {
     @Body() dto: UpdateOrderDto,
   ) {
     return this.ordersService.update(ctx, id, dto);
+  }
+
+  // Operativo: aplicar/quitar una promocion a la orden (una por orden).
+  @Post(':id/promotion')
+  applyPromotion(
+    @CurrentTenant() ctx: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ApplyPromotionDto,
+  ) {
+    return this.ordersService.applyPromotion(ctx, id, dto.promotionId);
+  }
+
+  @Delete(':id/promotion')
+  removePromotion(@CurrentTenant() ctx: TenantContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.ordersService.removePromotion(ctx, id);
   }
 
   // Eliminar el registro de una orden queda restringido a owner/admin.

@@ -474,8 +474,9 @@ model Promotion {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  venue  Venue? @relation(fields: [venueId], references: [id])
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  venue  Venue?  @relation(fields: [venueId], references: [id])
+  orders Order[]
 
   @@index([tenantId])
   @@index([venueId])
@@ -487,31 +488,35 @@ model Promotion {
 // ============================================================================
 
 model Order {
-  id         String      @id @default(uuid()) @db.Uuid
-  tenantId   String      @map("tenant_id") @db.Uuid
-  venueId    String      @map("venue_id") @db.Uuid
-  customerId String?     @map("customer_id") @db.Uuid
-  tableId    String?     @map("table_id") @db.Uuid
-  subtotal   Decimal     @default(0) @db.Decimal(12, 2)
-  taxTotal   Decimal     @default(0) @map("tax_total") @db.Decimal(12, 2)
-  total      Decimal     @default(0) @db.Decimal(12, 2)
-  status     OrderStatus @default(open)
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @map("tenant_id") @db.Uuid
+  venueId       String      @map("venue_id") @db.Uuid
+  customerId    String?     @map("customer_id") @db.Uuid
+  tableId       String?     @map("table_id") @db.Uuid
+  promotionId   String?     @map("promotion_id") @db.Uuid
+  subtotal      Decimal     @default(0) @db.Decimal(12, 2)
+  discountTotal Decimal     @default(0) @map("discount_total") @db.Decimal(12, 2)
+  taxTotal      Decimal     @default(0) @map("tax_total") @db.Decimal(12, 2)
+  total         Decimal     @default(0) @db.Decimal(12, 2)
+  status        OrderStatus @default(open)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  tenant   Tenant      @relation(fields: [tenantId], references: [id])
-  venue    Venue       @relation(fields: [venueId], references: [id])
-  customer Customer?   @relation(fields: [customerId], references: [id])
-  table    Table?      @relation(fields: [tableId], references: [id])
-  items    OrderItem[]
-  payments Payment[]
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  venue     Venue       @relation(fields: [venueId], references: [id])
+  customer  Customer?   @relation(fields: [customerId], references: [id])
+  table     Table?      @relation(fields: [tableId], references: [id])
+  promotion Promotion?  @relation(fields: [promotionId], references: [id])
+  items     OrderItem[]
+  payments  Payment[]
 
   @@index([tenantId])
   @@index([venueId])
   @@index([customerId])
   @@index([tableId])
+  @@index([promotionId])
   @@map("orders")
 }
 

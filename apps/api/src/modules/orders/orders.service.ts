@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { OrderStatus, Prisma } from '@prisma/client';
+import { OrderStatus, Prisma, PromotionDiscountType } from '@prisma/client';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddOrderItemDto } from './dto/add-order-item.dto';
@@ -234,12 +234,59 @@ export class OrdersService {
     });
   }
 
+  // ========================= Promotions =========================
+
+  async applyPromotion(ctx: TenantContext, orderId: string, promotionId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const order = await this.getEditableOrder(tx, ctx, orderId);
+
+      const promotion = await tx.promotion.findFirst({
+        where: {
+          id: promotionId,
+          tenantId: ctx.tenantId,
+          deletedAt: null,
+          // A nivel tenant (venueId null) o del mismo venue de la orden.
+          OR: [{ venueId: null }, { venueId: order.venueId }],
+        },
+      });
+      if (!promotion) {
+        throw new NotFoundException('Promocion no disponible para esta orden.');
+      }
+      if (promotion.status !== 'active') {
+        throw new ConflictException('La promocion no esta activa.');
+      }
+      const now = new Date();
+      if (promotion.startsAt && now < promotion.startsAt) {
+        throw new ConflictException('La promocion aun no esta vigente.');
+      }
+      if (promotion.endsAt && now > promotion.endsAt) {
+        throw new ConflictException('La promocion ya expiro.');
+      }
+
+      await tx.order.update({ where: { id: orderId }, data: { promotionId } });
+      await this.recalcTotals(tx, orderId);
+      return this.findOneTx(tx, ctx, orderId);
+    });
+  }
+
+  async removePromotion(ctx: TenantContext, orderId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await this.getEditableOrder(tx, ctx, orderId);
+      await tx.order.update({ where: { id: orderId }, data: { promotionId: null } });
+      await this.recalcTotals(tx, orderId);
+      return this.findOneTx(tx, ctx, orderId);
+    });
+  }
+
   // ========================= Helpers =========================
 
   private async recalcTotals(tx: Prisma.TransactionClient, orderId: string): Promise<void> {
     const order = await tx.order.findUniqueOrThrow({
       where: { id: orderId },
-      include: { venue: { select: { taxRate: true } } },
+      include: {
+        venue: { select: { taxRate: true } },
+        promotion: { select: { discountType: true, discountValue: true } },
+      },
     });
     const items = await tx.orderItem.findMany({
       where: { orderId, deletedAt: null },
@@ -251,11 +298,35 @@ export class OrdersService {
       subtotal = subtotal.add(new Prisma.Decimal(item.lineTotal));
     }
 
-    const taxRate = new Prisma.Decimal(order.venue.taxRate);
-    const taxTotal = subtotal.mul(taxRate).div(100).toDecimalPlaces(2);
-    const total = subtotal.add(taxTotal);
+    // Descuento (una promo por orden). Nunca supera el subtotal.
+    const discountTotal = order.promotion
+      ? this.computeDiscount(subtotal, order.promotion.discountType, order.promotion.discountValue)
+      : new Prisma.Decimal(0);
 
-    await tx.order.update({ where: { id: orderId }, data: { subtotal, taxTotal, total } });
+    // IVA sobre la base ya descontada.
+    const taxableBase = subtotal.sub(discountTotal);
+    const taxRate = new Prisma.Decimal(order.venue.taxRate);
+    const taxTotal = taxableBase.mul(taxRate).div(100).toDecimalPlaces(2);
+    const total = taxableBase.add(taxTotal);
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: { subtotal, discountTotal, taxTotal, total },
+    });
+  }
+
+  private computeDiscount(
+    subtotal: Prisma.Decimal,
+    type: PromotionDiscountType,
+    value: Prisma.Decimal | number,
+  ): Prisma.Decimal {
+    const val = new Prisma.Decimal(value);
+    const raw =
+      type === PromotionDiscountType.percentage
+        ? subtotal.mul(val).div(100).toDecimalPlaces(2)
+        : val;
+    // No descontar mas que el subtotal (evita totales negativos).
+    return raw.gt(subtotal) ? subtotal : raw;
   }
 
   private async getOrderTx(tx: Prisma.TransactionClient, ctx: TenantContext, orderId: string) {
