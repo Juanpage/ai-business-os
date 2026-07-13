@@ -1,5 +1,15 @@
 import { VenueStatus } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateVenueDto {
   @IsOptional()
@@ -7,6 +17,14 @@ export class UpdateVenueDto {
   @MinLength(2)
   @MaxLength(120)
   name?: string;
+
+  /** IVA del local en porcentaje (0-100). */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  taxRate?: number;
 
   @IsOptional()
   @IsEnum(VenueStatus)

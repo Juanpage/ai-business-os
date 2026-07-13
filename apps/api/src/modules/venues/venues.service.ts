@@ -15,7 +15,12 @@ export class VenuesService {
 
     try {
       return await this.prisma.venue.create({
-        data: { tenantId: ctx.tenantId, name: dto.name, slug },
+        data: {
+          tenantId: ctx.tenantId,
+          name: dto.name,
+          slug,
+          ...(dto.taxRate !== undefined && { taxRate: dto.taxRate }),
+        },
       });
     } catch (error) {
       if (this.isUniqueViolation(error)) {
@@ -50,7 +55,11 @@ export class VenuesService {
 
     return this.prisma.venue.update({
       where: { id },
-      data: { name: dto.name, status: dto.status },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.taxRate !== undefined && { taxRate: dto.taxRate }),
+        ...(dto.status !== undefined && { status: dto.status }),
+      },
     });
   }
 

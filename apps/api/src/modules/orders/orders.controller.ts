@@ -1,7 +1,65 @@
-import { Controller } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseEnumPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { OrderStatus, VenueRole } from '@prisma/client';
+import { Auth } from '../../common/decorators/auth.decorator';
+import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { TenantContext } from '../../common/tenant/tenant-context';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
+@Auth()
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  // Operativo: el staff abre y gestiona ordenes (POS).
+  @Post()
+  create(@CurrentTenant() ctx: TenantContext, @Body() dto: CreateOrderDto) {
+    return this.ordersService.create(ctx, dto);
+  }
+
+  @Get()
+  findAll(
+    @CurrentTenant() ctx: TenantContext,
+    @Query('venueId', new ParseUUIDPipe({ optional: true })) venueId?: string,
+    @Query('status', new ParseEnumPipe(OrderStatus, { optional: true })) status?: OrderStatus,
+  ) {
+    return this.ordersService.findAll(ctx, { venueId, status });
+  }
+
+  @Get(':id')
+  findOne(@CurrentTenant() ctx: TenantContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.ordersService.findOne(ctx, id);
+  }
+
+  @Patch(':id')
+  update(
+    @CurrentTenant() ctx: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateOrderDto,
+  ) {
+    return this.ordersService.update(ctx, id, dto);
+  }
+
+  // Eliminar el registro de una orden queda restringido a owner/admin.
+  @Delete(':id')
+  @Roles(VenueRole.owner, VenueRole.admin)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@CurrentTenant() ctx: TenantContext, @Param('id', ParseUUIDPipe) id: string) {
+    await this.ordersService.remove(ctx, id);
+  }
 }
