@@ -59,9 +59,11 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
 
 ## 4. Calidad y robustez (deuda técnica conocida)
 
-- [ ] **Tests automatizados** — NO hay suite (todo se ha probado a mano vía curl).
-      Falta configurar jest (+ e2e con supertest) y cubrir los flujos críticos.
-      → **En progreso: siguiente tarea acordada.**
+- [x] **Tests automatizados (base)** — ✅ HECHO (2026-07-13, commit `9442c85`).
+      Suite e2e jest+supertest contra DB de test `aibos_test` (7 tests: health, auth,
+      aislamiento, roles, ventas). Correr: `pnpm --filter @ai-business-os/api test:e2e`.
+      Falta (ampliar): cobertura de los módulos restantes (reservations, tables,
+      customers, events, promotions) y tests unitarios de services.
 - [ ] **Máquina de estados de `status`** — en orders/reservations/events/promotions el
       `status` se setea libremente vía PATCH; no se validan transiciones
       (ej. no impedir pasar de `cancelled` a `paid`). La única transición automática es
@@ -94,8 +96,9 @@ Decisiones clave: dinero siempre `Decimal` (nunca float); precio/nombre se "cong
 
 ## Próximos pasos sugeridos (en orden)
 
-1. **Tests automatizados** (blindar lo construido). ← siguiente
-2. Aplicar promociones a órdenes (valor de negocio).
+1. ~~Tests automatizados (base)~~ ✅ HECHO.
+2. **Aplicar promociones a órdenes** (valor de negocio). ← siguiente
 3. Seed demo.
 4. Remoto git + push (cuando el usuario dé la URL).
 5. Frontend real / facturación SaaS.
+6. Ampliar cobertura de tests a los módulos restantes.
