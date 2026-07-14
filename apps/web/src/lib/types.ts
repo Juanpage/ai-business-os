@@ -33,6 +33,34 @@ export interface Promotion {
   status: string;
 }
 
+export interface Table {
+  id: string;
+  code: string;
+  venueId: string;
+  status: string;
+}
+
+export interface Customer {
+  id: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  documentId: string | null;
+  venueId: string | null;
+  status: string;
+}
+
+export interface Reservation {
+  id: string;
+  venueId: string;
+  customerId: string | null;
+  tableId: string | null;
+  reservedAt: string;
+  partySize: number;
+  notes: string | null;
+  status: string;
+}
+
 export interface OrderItem {
   id: string;
   productId: string | null;
