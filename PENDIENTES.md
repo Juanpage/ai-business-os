@@ -49,9 +49,14 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
       (migr. `add_order_discount`). Una promo por orden, valida activa/vigente y
       venue/tenant-wide, tope = subtotal, IVA sobre base descontada. Cubierto por e2e.
       Falta (opcional): promos acumulables, promos por producto/categoría.
-- [ ] **Facturación SaaS** — módulos `plans` y `subscriptions` siguen como stubs.
-      Es el cobro a los tenants por usar la plataforma (no confundir con los pagos de
-      órdenes de los bares).
+- [x] **Facturación SaaS** — ✅ HECHO (2026-07-14, commit `4c7a888`). Módulo `billing`:
+      `GET /plans` (solo lectura, los define la plataforma), `GET /subscriptions/me`,
+      `POST /subscriptions` (suscribir/cambiar plan, solo owner),
+      `POST /subscriptions/me/cancel`. Plan gana price/interval/trialDays/maxVenues/
+      maxUsers; Subscription gana currentPeriodStart/End, trialEndsAt, cancelledAt
+      (migr. `add_billing_fields`). **El límite `maxVenues` se aplica de verdad**:
+      crear un venue sobre la cuota → 409. Seed con 3 planes (Free/Pro/Enterprise).
+      Falta (diferido): cobro real con pasarela, invoices, prorrateo, renovación por cron.
 - [ ] **`AIGenerationLog`** — entidad/módulo aún stub; registrar generaciones de IA.
 - [~] **Frontend real (`web`)** — incremento 1 HECHO (2026-07-13, commit `e086547`):
   login (JWT en localStorage) + dashboard protegido que muestra tenant/venues/carta
@@ -129,8 +134,10 @@ frontend incremento 1 (login + dashboard).
    `test/modules.e2e-spec.ts`: tables/customers/reservations/events/promotions con sus
    reglas de negocio (roles, validaciones, mesa↔venue, % >100, aislamiento).
    **Suite total: 20/20 en verde.** Correr: `pnpm --filter @ai-business-os/api test:e2e`.
-6. **Facturación SaaS**: implementar `plans` + `subscriptions` (cobro a tenants).
-7. **Panel admin (`apps/admin`)**: back-office multi-tenant.
+6. ~~Facturación SaaS~~ ✅ HECHO (commit `4c7a888`). Planes + suscripciones + límite
+   real de locales por plan (409). Suite e2e: **29/29 en verde**.
+7. **[SIGUIENTE] Panel admin (`apps/admin`)**: back-office multi-tenant (y CRUD de planes,
+   que hoy es solo lectura por API).
 8. **Endurecimiento**: máquina de estados de `status`, solapamiento de reservas,
    uniques (`tables[venueId,code]`, `customers.documentId`), paginación en listados.
 9. **Infra**: agregar `turbo` a devDeps raíz; hooks husky (eslint/typecheck);
