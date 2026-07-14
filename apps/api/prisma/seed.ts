@@ -53,14 +53,76 @@ async function main(): Promise<void> {
     data: { name: 'Bar Demo AI', slug: DEMO_SLUG },
   });
 
-  // ---- Plan + Subscription (facturacion SaaS del tenant) ----
-  const plan = await prisma.plan.upsert({
-    where: { code: 'demo-pro' },
-    update: {},
-    create: { name: 'Demo Pro', code: 'demo-pro' },
+  // ---- Planes de la plataforma (globales) + suscripcion del tenant demo ----
+  // Los planes son de la plataforma: se definen aqui, no los crean los tenants.
+  const planData = [
+    {
+      code: 'free',
+      name: 'Free',
+      description: 'Para empezar: un solo local.',
+      price: 0,
+      interval: 'monthly' as const,
+      trialDays: 0,
+      maxVenues: 1,
+      maxUsers: 3,
+    },
+    {
+      code: 'pro',
+      name: 'Pro',
+      description: 'Hasta 5 locales, con 14 dias de prueba.',
+      price: 49,
+      interval: 'monthly' as const,
+      trialDays: 14,
+      maxVenues: 5,
+      maxUsers: 25,
+    },
+    {
+      code: 'enterprise',
+      name: 'Enterprise',
+      description: 'Locales y usuarios ilimitados.',
+      price: 199,
+      interval: 'monthly' as const,
+      trialDays: 0,
+      maxVenues: null,
+      maxUsers: null,
+    },
+  ];
+
+  const plans: Record<string, string> = {};
+  for (const p of planData) {
+    const created = await prisma.plan.upsert({
+      where: { code: p.code },
+      update: p,
+      create: p,
+    });
+    plans[p.code] = created.id;
+  }
+
+  // Elimina planes obsoletos de corridas anteriores (solo si nadie los usa).
+  const obsolete = await prisma.plan.findMany({
+    where: {
+      code: { notIn: planData.map((p) => p.code) },
+      subscriptions: { none: {} },
+    },
+    select: { id: true, code: true },
   });
+  if (obsolete.length > 0) {
+    await prisma.plan.deleteMany({ where: { id: { in: obsolete.map((p) => p.id) } } });
+    console.log(`  (planes obsoletos eliminados: ${obsolete.map((p) => p.code).join(', ')})`);
+  }
+
+  // El tenant demo esta en Pro, con el periodo mensual vigente.
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
   await prisma.subscription.create({
-    data: { tenantId: tenant.id, planId: plan.id, status: 'active' },
+    data: {
+      tenantId: tenant.id,
+      planId: plans['pro'],
+      status: 'active',
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+    },
   });
 
   // ---- Venues ----

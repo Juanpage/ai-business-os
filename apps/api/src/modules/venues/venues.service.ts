@@ -11,6 +11,8 @@ export class VenuesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(ctx: TenantContext, dto: CreateVenueDto): Promise<Venue> {
+    await this.assertVenueQuota(ctx.tenantId);
+
     const slug = dto.slug ? normalizeSlug(dto.slug) : buildSlug(dto.name);
 
     try {
@@ -71,6 +73,37 @@ export class VenuesService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+  }
+
+  /**
+   * Hace cumplir el limite de locales del plan contratado (facturacion SaaS).
+   * Sin suscripcion vigente no se aplica limite; `maxVenues` null = ilimitado.
+   */
+  private async assertVenueQuota(tenantId: string): Promise<void> {
+    const subscription = await this.prisma.subscription.findFirst({
+      where: {
+        tenantId,
+        deletedAt: null,
+        status: { in: ['trialing', 'active', 'past_due'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { plan: { select: { name: true, maxVenues: true } } },
+    });
+
+    const maxVenues = subscription?.plan.maxVenues;
+    if (maxVenues == null) {
+      return;
+    }
+
+    const current = await this.prisma.venue.count({
+      where: { tenantId, deletedAt: null },
+    });
+
+    if (current >= maxVenues) {
+      throw new ConflictException(
+        `El plan "${subscription!.plan.name}" permite ${maxVenues} local(es) y ya tienes ${current}. Actualiza tu plan para agregar mas.`,
+      );
+    }
   }
 
   private isUniqueViolation(error: unknown): boolean {

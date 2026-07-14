@@ -54,6 +54,11 @@ enum SubscriptionStatus {
   expired
 }
 
+enum BillingInterval {
+  monthly
+  yearly
+}
+
 enum UserStatus {
   active
   invited
@@ -225,10 +230,17 @@ model Venue {
 // ============================================================================
 
 model Plan {
-  id     String     @id @default(uuid()) @db.Uuid
-  name   String
-  code   String     @unique
-  status PlanStatus @default(active)
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  code        String          @unique
+  description String?
+  price       Decimal         @default(0) @db.Decimal(12, 2)
+  interval    BillingInterval @default(monthly)
+  trialDays   Int             @default(0) @map("trial_days")
+  /// Limites del plan. null = ilimitado.
+  maxVenues   Int?            @map("max_venues")
+  maxUsers    Int?            @map("max_users")
+  status      PlanStatus      @default(active)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -240,10 +252,14 @@ model Plan {
 }
 
 model Subscription {
-  id       String             @id @default(uuid()) @db.Uuid
-  tenantId String             @map("tenant_id") @db.Uuid
-  planId   String             @map("plan_id") @db.Uuid
-  status   SubscriptionStatus @default(trialing)
+  id                 String             @id @default(uuid()) @db.Uuid
+  tenantId           String             @map("tenant_id") @db.Uuid
+  planId             String             @map("plan_id") @db.Uuid
+  currentPeriodStart DateTime           @default(now()) @map("current_period_start")
+  currentPeriodEnd   DateTime           @default(now()) @map("current_period_end")
+  trialEndsAt        DateTime?          @map("trial_ends_at")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  status             SubscriptionStatus @default(trialing)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
