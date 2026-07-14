@@ -29,15 +29,18 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
       reconstruye. Además, al encender Docker Desktop se reinician solos
       (`restart: unless-stopped`) y chocan con los dev servers en 3000/3001
       → hay que pararlos con `docker compose stop api web` (dejando `postgres`).
-- [ ] **`turbo` no instalado** — el `package.json` raíz usa `turbo run ...` en sus scripts,
-      pero `turbo` no está en devDependencies. `pnpm dev`/`build` a nivel raíz fallarían.
-      Hoy se evita con `pnpm --filter <pkg> run <script>`. Falta: agregar `turbo` como
-      devDependency raíz, o quitar esos scripts.
+- [x] **`turbo` + `pnpm` global** — ✅ HECHO (2026-07-14, commit `9a1df4e`).
+      `turbo` agregado a devDeps raíz **y pnpm instalado globalmente** (10.34.5, en el
+      prefijo de usuario `AppData\Roaming\npm`, sin admin). Turbo necesitaba el binario
+      del package manager en el PATH. Ahora `pnpm dev/build/typecheck` funcionan a nivel
+      monorepo (verificado: `pnpm typecheck` → 2/2 en verde).
+      **Esto cierra de raíz el viejo gotcha de "pnpm no es global"** (corepack enable
+      fallaba con EPERM). Ya no hace falta `npx pnpm@10...`.
+- [x] **`.claude/launch.json` duplicado** — ✅ HECHO. Eliminada la copia del proyecto;
+      la funcional vive en la carpeta de la sesión (que es donde `preview_start` lee).
 - [ ] **husky pre-commit mínimo** — solo corre prettier sobre archivos staged.
-      Falta (opcional): agregar eslint y/o typecheck al hook.
-- [ ] **`.claude/launch.json` duplicado** — el funcional vive en la carpeta de la sesión
-      (Capturas de pantalla) porque `preview_start` lee de ahí; hay una copia redundante
-      en `D:/AI-Business-OS/.claude/`. Decidir cuál se mantiene.
+      Falta (opcional): agregar eslint y/o typecheck al hook. (Ahora que turbo funciona,
+      `pnpm typecheck` en el hook sería viable, aunque encarece cada commit.)
 
 ## 2. Pendientes de negocio (features)
 
@@ -117,8 +120,11 @@ frontend incremento 1 (login + dashboard).
    CRUD productos y categorías (modal, multiidioma es/en, borrado con modal in-app).
 3. ~~Frontend — Gestión operativa~~ ✅ HECHO (commit `428b31b`). `/dashboard/operations`:
    3 pestañas mesas/clientes/reservas (reserva con mesa filtrada al local + datetime).
-4. **[SIGUIENTE] Frontend — Selector de idioma (i18n)**: aprovechar los campos multiidioma.
-5. **Ampliar cobertura de tests e2e**: reservations, tables, customers, events, promotions.
+4. ~~Frontend — Selector de idioma (i18n)~~ ✅ HECHO (commit `a7732b0`). Toggle ES/EN
+   (LanguageProvider + localStorage) en dashboard/POS/catálogo; `localized(v, locale)`
+   con fallback. Incluye además: **cierre de sesión automático en 401** (el JWT expira
+   en 1 día; antes el usuario quedaba atascado con un error).
+5. **[SIGUIENTE] Ampliar cobertura de tests e2e**: reservations, tables, customers, events, promotions.
 6. **Facturación SaaS**: implementar `plans` + `subscriptions` (cobro a tenants).
 7. **Panel admin (`apps/admin`)**: back-office multi-tenant.
 8. **Endurecimiento**: máquina de estados de `status`, solapamiento de reservas,
