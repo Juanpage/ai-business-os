@@ -70,11 +70,12 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
 
 ## 4. Calidad y robustez (deuda técnica conocida)
 
-- [x] **Tests automatizados (base)** — ✅ HECHO (2026-07-13, commit `9442c85`).
-      Suite e2e jest+supertest contra DB de test `aibos_test` (7 tests: health, auth,
-      aislamiento, roles, ventas). Correr: `pnpm --filter @ai-business-os/api test:e2e`.
-      Falta (ampliar): cobertura de los módulos restantes (reservations, tables,
-      customers, events, promotions) y tests unitarios de services.
+- [x] **Tests automatizados** — ✅ HECHO. Base (commit `9442c85`) + ampliación a todos los
+      módulos (commit `ee8f539`). Suite e2e jest+supertest contra DB de test `aibos_test`:
+      **20 tests en verde** (auth, aislamiento, roles, ventas/IVA, promos en órdenes,
+      tables, customers, reservations, events, promotions).
+      Correr: `pnpm --filter @ai-business-os/api test:e2e`.
+      Falta (opcional): tests unitarios de services con mocks.
 - [ ] **Máquina de estados de `status`** — en orders/reservations/events/promotions el
       `status` se setea libremente vía PATCH; no se validan transiciones
       (ej. no impedir pasar de `cancelled` a `paid`). La única transición automática es
@@ -124,7 +125,10 @@ frontend incremento 1 (login + dashboard).
    (LanguageProvider + localStorage) en dashboard/POS/catálogo; `localized(v, locale)`
    con fallback. Incluye además: **cierre de sesión automático en 401** (el JWT expira
    en 1 día; antes el usuario quedaba atascado con un error).
-5. **[SIGUIENTE] Ampliar cobertura de tests e2e**: reservations, tables, customers, events, promotions.
+5. ~~Ampliar cobertura de tests e2e~~ ✅ HECHO (commit `ee8f539`). `test/helpers.ts` +
+   `test/modules.e2e-spec.ts`: tables/customers/reservations/events/promotions con sus
+   reglas de negocio (roles, validaciones, mesa↔venue, % >100, aislamiento).
+   **Suite total: 20/20 en verde.** Correr: `pnpm --filter @ai-business-os/api test:e2e`.
 6. **Facturación SaaS**: implementar `plans` + `subscriptions` (cobro a tenants).
 7. **Panel admin (`apps/admin`)**: back-office multi-tenant.
 8. **Endurecimiento**: máquina de estados de `status`, solapamiento de reservas,
