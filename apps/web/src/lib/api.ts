@@ -41,6 +41,17 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
+  // Sesion invalida o expirada (el JWT dura 1 dia): limpia y manda al login.
+  // Solo si la peticion iba autenticada; un 401 sin token es un login fallido.
+  if (res.status === 401 && token) {
+    clearToken();
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('aibos_user');
+      window.location.href = '/login';
+    }
+    throw new ApiError(401, 'Sesion expirada');
+  }
+
   if (!res.ok) {
     let message = `Error ${res.status}`;
     try {

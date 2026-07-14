@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useLanguage } from '@/lib/language-context';
 import { localized, type Order, type Product, type Promotion, type Venue } from '@/lib/types';
 
 type PaymentMethod = 'cash' | 'card' | 'transfer';
@@ -12,6 +14,7 @@ type PaymentMethod = 'cash' | 'card' | 'transfer';
 export default function PosPage() {
   const router = useRouter();
   const { user, ready } = useAuth();
+  const { locale } = useLanguage();
 
   const [venues, setVenues] = useState<Venue[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -153,18 +156,21 @@ export default function PosPage() {
             </Link>
             <h1 className="text-lg font-semibold text-gray-900">Punto de venta</h1>
           </div>
-          <select
-            value={venueId}
-            onChange={(e) => setVenueId(e.target.value)}
-            disabled={hasItems && !isPaid}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400"
-          >
-            {venues.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name} (IVA {v.taxRate}%)
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <select
+              value={venueId}
+              onChange={(e) => setVenueId(e.target.value)}
+              disabled={hasItems && !isPaid}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400"
+            >
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name} (IVA {v.taxRate}%)
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </header>
 
@@ -182,7 +188,9 @@ export default function PosPage() {
                 disabled={busy || isPaid}
                 className="flex flex-col items-start rounded-lg bg-white p-4 text-left shadow-sm ring-1 ring-gray-100 hover:ring-gray-300 disabled:opacity-50"
               >
-                <span className="text-sm font-medium text-gray-900">{localized(p.name)}</span>
+                <span className="text-sm font-medium text-gray-900">
+                  {localized(p.name, locale)}
+                </span>
                 <span className="mt-1 text-sm text-gray-500">{money(p.price)}</span>
               </button>
             ))}
@@ -224,7 +232,7 @@ export default function PosPage() {
                   <li key={it.id} className="flex items-center justify-between py-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-gray-900">
-                        {localized(it.productName)}
+                        {localized(it.productName, locale)}
                       </p>
                       <p className="text-xs text-gray-500">{money(it.unitPrice)} c/u</p>
                     </div>
@@ -269,7 +277,7 @@ export default function PosPage() {
                     <option value="">Sin promocion</option>
                     {promotions.map((pr) => (
                       <option key={pr.id} value={pr.id}>
-                        {localized(pr.name)}
+                        {localized(pr.name, locale)}
                       </option>
                     ))}
                   </select>

@@ -91,7 +91,10 @@ export interface Order {
   payments: Payment[];
 }
 
-/** Texto multiidioma con preferencia por espanol. */
-export function localized(value: Localized): string {
-  return value?.es ?? Object.values(value ?? {})[0] ?? '';
+/**
+ * Texto multiidioma en el idioma pedido, con fallback a espanol y luego al
+ * primer idioma disponible (asi nunca queda vacio si falta una traduccion).
+ */
+export function localized(value: Localized, locale: string = 'es'): string {
+  return value?.[locale] ?? value?.es ?? Object.values(value ?? {})[0] ?? '';
 }

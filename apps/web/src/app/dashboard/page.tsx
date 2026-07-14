@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useLanguage } from '@/lib/language-context';
+import { localized } from '@/lib/types';
 
 interface Tenant {
   id: string;
@@ -29,6 +32,7 @@ interface Product {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, ready, logout } = useAuth();
+  const { locale } = useLanguage();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -85,6 +89,7 @@ export default function DashboardPage() {
             <p className="text-xs text-gray-500">{user.email}</p>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <Link
               href="/dashboard/catalog"
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
@@ -152,7 +157,7 @@ export default function DashboardPage() {
                     className="flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
                   >
                     <span className="text-sm font-medium text-gray-900">
-                      {p.name.es ?? Object.values(p.name)[0]}
+                      {localized(p.name, locale)}
                     </span>
                     <span className="text-sm text-gray-700">${Number(p.price).toFixed(2)}</span>
                   </li>

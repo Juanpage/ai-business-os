@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { Modal } from '@/components/Modal';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useLanguage } from '@/lib/language-context';
 import { localized, type Category, type Localized, type Product, type Venue } from '@/lib/types';
 
 type Tab = 'products' | 'categories';
@@ -41,6 +43,7 @@ function buildLocalized(es: string, en: string): Localized {
 export default function CatalogPage() {
   const router = useRouter();
   const { user, ready } = useAuth();
+  const { locale } = useLanguage();
 
   const [tab, setTab] = useState<Tab>('products');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -148,7 +151,7 @@ export default function CatalogPage() {
   if (!ready || !user) return null;
 
   const categoryName = (id: string | null) =>
-    id ? localized(categories.find((c) => c.id === id)?.name ?? {}) || '—' : '—';
+    id ? localized(categories.find((c) => c.id === id)?.name ?? {}, locale) || '—' : '—';
   const venueName = (id: string | null) =>
     id ? (venues.find((v) => v.id === id)?.name ?? '—') : 'Todos los locales';
 
@@ -162,12 +165,15 @@ export default function CatalogPage() {
             </Link>
             <h1 className="text-lg font-semibold text-gray-900">Catalogo</h1>
           </div>
-          <button
-            onClick={() => openCreate(tab === 'products' ? 'product' : 'category')}
-            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
-          >
-            + {tab === 'products' ? 'Producto' : 'Categoria'}
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <button
+              onClick={() => openCreate(tab === 'products' ? 'product' : 'category')}
+              className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              + {tab === 'products' ? 'Producto' : 'Categoria'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -200,7 +206,7 @@ export default function CatalogPage() {
                 className="flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{localized(p.name)}</p>
+                  <p className="text-sm font-medium text-gray-900">{localized(p.name, locale)}</p>
                   <p className="text-xs text-gray-500">
                     {categoryName(p.categoryId)} · {venueName(p.venueId)}
                   </p>
@@ -231,7 +237,7 @@ export default function CatalogPage() {
                 key={c.id}
                 className="flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
               >
-                <p className="text-sm font-medium text-gray-900">{localized(c.name)}</p>
+                <p className="text-sm font-medium text-gray-900">{localized(c.name, locale)}</p>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => openEdit('category', c)}
@@ -302,7 +308,7 @@ export default function CatalogPage() {
                     <option value="">Sin categoria</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {localized(c.name)}
+                        {localized(c.name, locale)}
                       </option>
                     ))}
                   </select>
