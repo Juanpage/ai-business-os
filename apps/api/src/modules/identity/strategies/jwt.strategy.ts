@@ -30,6 +30,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: JwtPayload): AuthenticatedUser {
+    // Rechaza tokens que no sean de un usuario de tenant (p. ej. los de
+    // plataforma, que no llevan tenantId). Aislamiento estricto tenant<->admin.
+    if (!payload.tenantId) {
+      throw new UnauthorizedException('Token no valido para este recurso.');
+    }
     return {
       userId: payload.sub,
       tenantId: payload.tenantId,

@@ -48,6 +48,13 @@ async function main(): Promise<void> {
 
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
 
+  // ---- Admin de plataforma (back-office; no pertenece a ningun tenant) ----
+  await prisma.platformAdmin.upsert({
+    where: { email: 'admin@platform.com' },
+    update: { passwordHash, status: 'active', deletedAt: null },
+    create: { email: 'admin@platform.com', passwordHash },
+  });
+
   // ---- Tenant ----
   const tenant = await prisma.tenant.create({
     data: { name: 'Bar Demo AI', slug: DEMO_SLUG },

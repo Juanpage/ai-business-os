@@ -65,6 +65,11 @@ enum UserStatus {
   suspended
 }
 
+enum PlatformAdminStatus {
+  active
+  suspended
+}
+
 enum VenueRole {
   owner
   admin
@@ -158,6 +163,25 @@ enum AIGenerationStatus {
   pending
   success
   error
+}
+
+// ============================================================================
+// PLATAFORMA (back-office / super-admin)
+// ============================================================================
+
+// Administrador de la PLATAFORMA (dueno del SaaS). NO pertenece a ningun
+// tenant: es una identidad separada de User, con su propia autenticacion.
+model PlatformAdmin {
+  id           String              @id @default(uuid()) @db.Uuid
+  email        String              @unique
+  passwordHash String              @map("password_hash")
+  status       PlatformAdminStatus @default(active)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("platform_admins")
 }
 
 // ============================================================================
