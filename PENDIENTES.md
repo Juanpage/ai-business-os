@@ -136,8 +136,12 @@ frontend incremento 1 (login + dashboard).
    **Suite total: 20/20 en verde.** Correr: `pnpm --filter @ai-business-os/api test:e2e`.
 6. ~~Facturación SaaS~~ ✅ HECHO (commit `4c7a888`). Planes + suscripciones + límite
    real de locales por plan (409). Suite e2e: **29/29 en verde**.
-7. **[SIGUIENTE] Panel admin (`apps/admin`)**: back-office multi-tenant (y CRUD de planes,
-   que hoy es solo lectura por API).
+7. **Panel admin** — **Fase 1 (backend) ✅ HECHA** (commit `3a1aab9`): modelo
+   `PlatformAdmin` separado (super-admin sin tenant), auth propia con scope 'platform',
+   aislamiento estricto bidireccional (401), `GET /admin/tenants`, `PATCH /admin/tenants/:id`,
+   CRUD `/admin/plans`, `GET /admin/metrics` (MRR). Seed `admin@platform.com`/`demo1234`.
+   Suite e2e 40/40. **[SIGUIENTE] Fase 2 (frontend `apps/admin`)**: login + tenants +
+   CRUD planes + métricas.
 8. **Endurecimiento**: máquina de estados de `status`, solapamiento de reservas,
    uniques (`tables[venueId,code]`, `customers.documentId`), paginación en listados.
 9. **Infra**: agregar `turbo` a devDeps raíz; hooks husky (eslint/typecheck);
