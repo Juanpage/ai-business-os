@@ -6,19 +6,19 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseEnumPipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { OrderStatus, VenueRole } from '@prisma/client';
+import { VenueRole } from '@prisma/client';
 import { Auth } from '../../common/decorators/auth.decorator';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { ApplyPromotionDto } from './dto/apply-promotion.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderQueryDto } from './dto/order-query.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrdersService } from './orders.service';
 
@@ -34,12 +34,8 @@ export class OrdersController {
   }
 
   @Get()
-  findAll(
-    @CurrentTenant() ctx: TenantContext,
-    @Query('venueId', new ParseUUIDPipe({ optional: true })) venueId?: string,
-    @Query('status', new ParseEnumPipe(OrderStatus, { optional: true })) status?: OrderStatus,
-  ) {
-    return this.ordersService.findAll(ctx, { venueId, status });
+  findAll(@CurrentTenant() ctx: TenantContext, @Query() query: OrderQueryDto) {
+    return this.ordersService.findAll(ctx, query);
   }
 
   @Get(':id')

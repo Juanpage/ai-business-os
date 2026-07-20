@@ -143,7 +143,7 @@ describe('Reservations', () => {
       .get('/api/reservations?status=confirmed')
       .set(auth(owner.token))
       .expect(200);
-    expect(list.body).toHaveLength(1);
+    expect(list.body.data).toHaveLength(1);
   });
 
   it('valida partySize >= 1 y fecha (400)', async () => {
@@ -261,15 +261,15 @@ describe('Aislamiento entre tenants (modulos operativos)', () => {
     const other = await registerTenant(app, 'ops-isolated@test.com');
     const h = auth(other.token);
 
-    for (const path of [
-      '/api/tables',
-      '/api/customers',
-      '/api/reservations',
-      '/api/events',
-      '/api/promotions',
-    ]) {
+    // tables/events/promotions siguen sin paginar; customers/reservations
+    // devuelven {data, total, page, pageSize}.
+    for (const path of ['/api/tables', '/api/events', '/api/promotions']) {
       const res = await request(server()).get(path).set(h).expect(200);
       expect(res.body).toHaveLength(0);
+    }
+    for (const path of ['/api/customers', '/api/reservations']) {
+      const res = await request(server()).get(path).set(h).expect(200);
+      expect(res.body.data).toHaveLength(0);
     }
   });
 });

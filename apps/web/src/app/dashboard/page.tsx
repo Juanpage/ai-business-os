@@ -7,7 +7,7 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
-import { localized } from '@/lib/types';
+import { localized, type Paginated } from '@/lib/types';
 
 interface Tenant {
   id: string;
@@ -53,11 +53,11 @@ export default function DashboardPage() {
       const [t, v, p] = await Promise.all([
         apiFetch<Tenant>('/tenants/me'),
         apiFetch<Venue[]>('/venues'),
-        apiFetch<Product[]>('/products'),
+        apiFetch<Paginated<Product>>('/products?pageSize=100'),
       ]);
       setTenant(t);
       setVenues(v);
-      setProducts(p);
+      setProducts(p.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error cargando datos');
     } finally {

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Event, EventStatus, Prisma } from '@prisma/client';
 import { TenantContext } from '../../common/tenant/tenant-context';
+import { assertValidTransition } from '../../common/utils/state-machine';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -9,6 +10,15 @@ interface EventFilters {
   venueId?: string;
   status?: EventStatus;
 }
+
+/** Transiciones permitidas del ciclo de vida de un evento. */
+const ALLOWED_TRANSITIONS: Record<EventStatus, EventStatus[]> = {
+  draft: [EventStatus.scheduled, EventStatus.published, EventStatus.cancelled],
+  scheduled: [EventStatus.published, EventStatus.cancelled],
+  published: [EventStatus.finished, EventStatus.cancelled],
+  cancelled: [],
+  finished: [],
+};
 
 @Injectable()
 export class EventsService {
@@ -58,7 +68,11 @@ export class EventsService {
   }
 
   async update(ctx: TenantContext, id: string, dto: UpdateEventDto): Promise<Event> {
-    await this.findOne(ctx, id);
+    const existing = await this.findOne(ctx, id);
+
+    if (dto.status !== undefined) {
+      assertValidTransition(existing.status, dto.status, ALLOWED_TRANSITIONS);
+    }
 
     return this.prisma.event.update({
       where: { id },

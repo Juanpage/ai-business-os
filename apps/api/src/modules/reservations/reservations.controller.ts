@@ -6,18 +6,18 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseEnumPipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { ReservationStatus, VenueRole } from '@prisma/client';
+import { VenueRole } from '@prisma/client';
 import { Auth } from '../../common/decorators/auth.decorator';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { ReservationQueryDto } from './dto/reservation-query.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationsService } from './reservations.service';
 
@@ -33,13 +33,8 @@ export class ReservationsController {
   }
 
   @Get()
-  findAll(
-    @CurrentTenant() ctx: TenantContext,
-    @Query('venueId', new ParseUUIDPipe({ optional: true })) venueId?: string,
-    @Query('status', new ParseEnumPipe(ReservationStatus, { optional: true }))
-    status?: ReservationStatus,
-  ) {
-    return this.reservationsService.findAll(ctx, { venueId, status });
+  findAll(@CurrentTenant() ctx: TenantContext, @Query() query: ReservationQueryDto) {
+    return this.reservationsService.findAll(ctx, query);
   }
 
   @Get(':id')

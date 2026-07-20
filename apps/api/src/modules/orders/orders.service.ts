@@ -1,6 +1,8 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, Prisma, PromotionDiscountType } from '@prisma/client';
+import { Paginated, PaginationQueryDto, toSkipTake } from '../../common/dto/pagination.dto';
 import { TenantContext } from '../../common/tenant/tenant-context';
+import { assertValidTransition } from '../../common/utils/state-machine';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddOrderItemDto } from './dto/add-order-item.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -10,12 +12,21 @@ import { UpdateOrderItemDto } from './dto/update-order-item.dto';
 
 const EDITABLE_STATUSES: OrderStatus[] = [OrderStatus.open, OrderStatus.pending_payment];
 
+/** Transiciones manuales permitidas via PATCH (los pagos ya mueven el estado solos). */
+const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  open: [OrderStatus.pending_payment, OrderStatus.paid, OrderStatus.cancelled],
+  pending_payment: [OrderStatus.paid, OrderStatus.cancelled],
+  paid: [OrderStatus.refunded],
+  cancelled: [],
+  refunded: [],
+};
+
 const ORDER_INCLUDE = {
   items: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
   payments: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.OrderInclude;
 
-interface OrderFilters {
+interface OrderFilters extends PaginationQueryDto {
   venueId?: string;
   status?: OrderStatus;
 }
@@ -47,17 +58,27 @@ export class OrdersService {
     return this.findOne(ctx, order.id);
   }
 
-  async findAll(ctx: TenantContext, filters: OrderFilters = {}) {
-    return this.prisma.order.findMany({
-      where: {
-        tenantId: ctx.tenantId,
-        deletedAt: null,
-        ...(filters.venueId ? { venueId: filters.venueId } : {}),
-        ...(filters.status ? { status: filters.status } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-      include: ORDER_INCLUDE,
-    });
+  async findAll(ctx: TenantContext, filters: OrderFilters = {}): Promise<Paginated<unknown>> {
+    const { skip, take, page, pageSize } = toSkipTake(filters);
+    const where = {
+      tenantId: ctx.tenantId,
+      deletedAt: null,
+      ...(filters.venueId ? { venueId: filters.venueId } : {}),
+      ...(filters.status ? { status: filters.status } : {}),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: ORDER_INCLUDE,
+        skip,
+        take,
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return { data, total, page, pageSize };
   }
 
   async findOne(ctx: TenantContext, id: string) {
@@ -76,6 +97,9 @@ export class OrdersService {
   async update(ctx: TenantContext, id: string, dto: UpdateOrderDto) {
     const order = await this.findOne(ctx, id);
 
+    if (dto.status !== undefined) {
+      assertValidTransition(order.status, dto.status, ALLOWED_TRANSITIONS);
+    }
     if (dto.customerId) {
       await this.assertCustomerInTenant(ctx.tenantId, dto.customerId);
     }

@@ -2,6 +2,14 @@
 
 export type Localized = Record<string, string>;
 
+/** Forma de respuesta de los listados paginados del backend. */
+export interface Paginated<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface Venue {
   id: string;
   name: string;

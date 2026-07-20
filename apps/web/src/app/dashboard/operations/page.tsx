@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/Modal';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import type { Customer, Reservation, Table, Venue } from '@/lib/types';
+import type { Customer, Paginated, Reservation, Table, Venue } from '@/lib/types';
 
 type Tab = 'tables' | 'customers' | 'reservations';
 type Entity = 'table' | 'customer' | 'reservation';
@@ -77,13 +77,13 @@ export default function OperationsPage() {
       const [v, t, c, r] = await Promise.all([
         apiFetch<Venue[]>('/venues'),
         apiFetch<Table[]>('/tables'),
-        apiFetch<Customer[]>('/customers'),
-        apiFetch<Reservation[]>('/reservations'),
+        apiFetch<Paginated<Customer>>('/customers?pageSize=100'),
+        apiFetch<Paginated<Reservation>>('/reservations?pageSize=100'),
       ]);
       setVenues(v);
       setTables(t);
-      setCustomers(c);
-      setReservations(r);
+      setCustomers(c.data);
+      setReservations(r.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error cargando datos');
     }

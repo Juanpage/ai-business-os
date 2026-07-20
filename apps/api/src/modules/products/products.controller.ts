@@ -17,6 +17,7 @@ import { CurrentTenant } from '../../common/decorators/current-tenant.decorator'
 import { Roles } from '../../common/decorators/roles.decorator';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { CreateProductDto } from './dto/create-product.dto';
+import { ProductQueryDto } from './dto/product-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
@@ -32,12 +33,8 @@ export class ProductsController {
   }
 
   @Get()
-  findAll(
-    @CurrentTenant() ctx: TenantContext,
-    @Query('venueId', new ParseUUIDPipe({ optional: true })) venueId?: string,
-    @Query('categoryId', new ParseUUIDPipe({ optional: true })) categoryId?: string,
-  ) {
-    return this.productsService.findAll(ctx, { venueId, categoryId });
+  findAll(@CurrentTenant() ctx: TenantContext, @Query() query: ProductQueryDto) {
+    return this.productsService.findAll(ctx, query);
   }
 
   @Get(':id')

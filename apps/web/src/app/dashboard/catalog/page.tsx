@@ -8,7 +8,14 @@ import { Modal } from '@/components/Modal';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
-import { localized, type Category, type Localized, type Product, type Venue } from '@/lib/types';
+import {
+  localized,
+  type Category,
+  type Localized,
+  type Paginated,
+  type Product,
+  type Venue,
+} from '@/lib/types';
 
 type Tab = 'products' | 'categories';
 type Entity = 'product' | 'category';
@@ -65,11 +72,11 @@ export default function CatalogPage() {
     try {
       const [c, p, v] = await Promise.all([
         apiFetch<Category[]>('/categories'),
-        apiFetch<Product[]>('/products'),
+        apiFetch<Paginated<Product>>('/products?pageSize=100'),
         apiFetch<Venue[]>('/venues'),
       ]);
       setCategories(c);
-      setProducts(p);
+      setProducts(p.data);
       setVenues(v);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error cargando el catalogo');

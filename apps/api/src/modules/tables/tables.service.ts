@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Table } from '@prisma/client';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -11,6 +11,7 @@ export class TablesService {
 
   async create(ctx: TenantContext, dto: CreateTableDto): Promise<Table> {
     await this.assertVenueInTenant(ctx.tenantId, dto.venueId);
+    await this.assertCodeAvailable(ctx.tenantId, dto.venueId, dto.code);
 
     return this.prisma.table.create({
       data: {
@@ -42,7 +43,11 @@ export class TablesService {
   }
 
   async update(ctx: TenantContext, id: string, dto: UpdateTableDto): Promise<Table> {
-    await this.findOne(ctx, id);
+    const existing = await this.findOne(ctx, id);
+
+    if (dto.code !== undefined && dto.code !== existing.code) {
+      await this.assertCodeAvailable(ctx.tenantId, existing.venueId, dto.code, id);
+    }
 
     return this.prisma.table.update({
       where: { id },
@@ -70,6 +75,29 @@ export class TablesService {
 
     if (!venue) {
       throw new NotFoundException('El venue indicado no pertenece al tenant.');
+    }
+  }
+
+  /** No puede haber dos mesas activas con el mismo codigo en el mismo venue. */
+  private async assertCodeAvailable(
+    tenantId: string,
+    venueId: string,
+    code: string,
+    excludeTableId?: string,
+  ): Promise<void> {
+    const existing = await this.prisma.table.findFirst({
+      where: {
+        tenantId,
+        venueId,
+        code,
+        deletedAt: null,
+        ...(excludeTableId ? { id: { not: excludeTableId } } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new ConflictException(`Ya existe una mesa con el codigo "${code}" en este venue.`);
     }
   }
 }

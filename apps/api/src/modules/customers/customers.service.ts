@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Customer } from '@prisma/client';
+import { Paginated, PaginationQueryDto, toSkipTake } from '../../common/dto/pagination.dto';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+
+interface CustomerFilters extends PaginationQueryDto {
+  venueId?: string;
+}
 
 @Injectable()
 export class CustomersService {
@@ -27,11 +32,20 @@ export class CustomersService {
     });
   }
 
-  async findAll(ctx: TenantContext, venueId?: string): Promise<Customer[]> {
-    return this.prisma.customer.findMany({
-      where: { tenantId: ctx.tenantId, deletedAt: null, ...(venueId ? { venueId } : {}) },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(ctx: TenantContext, filters: CustomerFilters = {}): Promise<Paginated<Customer>> {
+    const { skip, take, page, pageSize } = toSkipTake(filters);
+    const where = {
+      tenantId: ctx.tenantId,
+      deletedAt: null,
+      ...(filters.venueId ? { venueId: filters.venueId } : {}),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.customer.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take }),
+      this.prisma.customer.count({ where }),
+    ]);
+
+    return { data, total, page, pageSize };
   }
 
   async findOne(ctx: TenantContext, id: string): Promise<Customer> {

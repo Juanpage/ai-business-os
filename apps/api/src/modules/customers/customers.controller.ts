@@ -17,6 +17,7 @@ import { CurrentTenant } from '../../common/decorators/current-tenant.decorator'
 import { Roles } from '../../common/decorators/roles.decorator';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { CreateCustomerDto } from './dto/create-customer.dto';
+import { CustomerQueryDto } from './dto/customer-query.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomersService } from './customers.service';
 
@@ -32,11 +33,8 @@ export class CustomersController {
   }
 
   @Get()
-  findAll(
-    @CurrentTenant() ctx: TenantContext,
-    @Query('venueId', new ParseUUIDPipe({ optional: true })) venueId?: string,
-  ) {
-    return this.customersService.findAll(ctx, venueId);
+  findAll(@CurrentTenant() ctx: TenantContext, @Query() query: CustomerQueryDto) {
+    return this.customersService.findAll(ctx, query);
   }
 
   @Get(':id')

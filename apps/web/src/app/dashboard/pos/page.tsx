@@ -7,7 +7,14 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
-import { localized, type Order, type Product, type Promotion, type Venue } from '@/lib/types';
+import {
+  localized,
+  type Order,
+  type Paginated,
+  type Product,
+  type Promotion,
+  type Venue,
+} from '@/lib/types';
 
 type PaymentMethod = 'cash' | 'card' | 'transfer';
 
@@ -36,11 +43,11 @@ export default function PosPage() {
       try {
         const [v, p, promo] = await Promise.all([
           apiFetch<Venue[]>('/venues'),
-          apiFetch<Product[]>('/products'),
+          apiFetch<Paginated<Product>>('/products?pageSize=100'),
           apiFetch<Promotion[]>('/promotions?status=active'),
         ]);
         setVenues(v);
-        setProducts(p);
+        setProducts(p.data);
         setPromotions(promo);
         if (v.length > 0) setVenueId(v[0].id);
       } catch (e) {

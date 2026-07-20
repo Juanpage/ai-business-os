@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Product } from '@prisma/client';
+import { Paginated, PaginationQueryDto, toSkipTake } from '../../common/dto/pagination.dto';
 import { TenantContext } from '../../common/tenant/tenant-context';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
-interface ProductFilters {
+interface ProductFilters extends PaginationQueryDto {
   venueId?: string;
   categoryId?: string;
 }
@@ -37,16 +38,21 @@ export class ProductsService {
     });
   }
 
-  async findAll(ctx: TenantContext, filters: ProductFilters = {}): Promise<Product[]> {
-    return this.prisma.product.findMany({
-      where: {
-        tenantId: ctx.tenantId,
-        deletedAt: null,
-        ...(filters.venueId ? { venueId: filters.venueId } : {}),
-        ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(ctx: TenantContext, filters: ProductFilters = {}): Promise<Paginated<Product>> {
+    const { skip, take, page, pageSize } = toSkipTake(filters);
+    const where = {
+      tenantId: ctx.tenantId,
+      deletedAt: null,
+      ...(filters.venueId ? { venueId: filters.venueId } : {}),
+      ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.product.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    return { data, total, page, pageSize };
   }
 
   async findOne(ctx: TenantContext, id: string): Promise<Product> {
