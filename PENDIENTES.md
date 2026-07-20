@@ -115,8 +115,9 @@ Decisiones clave: dinero siempre `Decimal` (nunca float); precio/nombre se "cong
 
 > Toda sugerencia que surja se agrega AQUÍ para no perderla. Se van tomando en orden.
 
-**Hitos completados:** tests e2e base · promos en órdenes · seed demo · remoto GitHub ·
-frontend incremento 1 (login + dashboard).
+**Hitos completados:** tests e2e base (y ampliados a 40) · promos en órdenes · seed demo ·
+remoto GitHub · frontend (login/dashboard/POS/catálogo/operación/i18n) · infra
+(turbo+pnpm global) · facturación SaaS (planes+límite real) · panel admin (backend+frontend).
 
 **En cola (orden actual):**
 
@@ -136,12 +137,14 @@ frontend incremento 1 (login + dashboard).
    **Suite total: 20/20 en verde.** Correr: `pnpm --filter @ai-business-os/api test:e2e`.
 6. ~~Facturación SaaS~~ ✅ HECHO (commit `4c7a888`). Planes + suscripciones + límite
    real de locales por plan (409). Suite e2e: **29/29 en verde**.
-7. **Panel admin** — **Fase 1 (backend) ✅ HECHA** (commit `3a1aab9`): modelo
-   `PlatformAdmin` separado (super-admin sin tenant), auth propia con scope 'platform',
-   aislamiento estricto bidireccional (401), `GET /admin/tenants`, `PATCH /admin/tenants/:id`,
-   CRUD `/admin/plans`, `GET /admin/metrics` (MRR). Seed `admin@platform.com`/`demo1234`.
-   Suite e2e 40/40. **[SIGUIENTE] Fase 2 (frontend `apps/admin`)**: login + tenants +
-   CRUD planes + métricas.
+7. **Panel admin** — ✅ HECHO. **Fase 1 (backend)** commit `3a1aab9`: modelo
+   `PlatformAdmin` separado, auth propia scope 'platform', aislamiento bidireccional (401),
+   `GET/PATCH /admin/tenants`, CRUD `/admin/plans`, `GET /admin/metrics` (MRR). Suite 40/40.
+   **Fase 2 (frontend)** commit `2f781a0`: `apps/admin` (Next.js nuevo, puerto **3002**):
+   login, dashboard (MRR/tenants/suscripciones), tabla tenants (suspender/reactivar),
+   CRUD planes (modal). localStorage con claves propias (`aibos_admin_*`) — verificado que
+   la sesión de plataforma y la de tenant **conviven sin pisarse** en pestañas distintas.
+   Seed `admin@platform.com`/`demo1234`.
 8. **Endurecimiento**: máquina de estados de `status`, solapamiento de reservas,
    uniques (`tables[venueId,code]`, `customers.documentId`), paginación en listados.
 9. **Infra**: agregar `turbo` a devDeps raíz; hooks husky (eslint/typecheck);
