@@ -81,15 +81,24 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
       tables, customers, reservations, events, promotions).
       Correr: `pnpm --filter @ai-business-os/api test:e2e`.
       Falta (opcional): tests unitarios de services con mocks.
-- [ ] **Máquina de estados de `status`** — en orders/reservations/events/promotions el
-      `status` se setea libremente vía PATCH; no se validan transiciones
-      (ej. no impedir pasar de `cancelled` a `paid`). La única transición automática es
-      la de pagos (order → pending_payment/paid).
-- [ ] **Solapamiento de reservas** — no se valida que dos reservas choquen en la misma
-      mesa/horario.
-- [ ] **Unicidad de datos** — `tables` no tiene unique en `[venueId, code]`;
-      `customers.documentId` no es único por tenant. Evaluar si se necesita.
-- [ ] **Paginación** — los listados (`GET`) devuelven todo sin paginar.
+- [x] **Máquina de estados de `status`** — ✅ HECHO (2026-07-20, commit `5218741`).
+      `common/utils/state-machine.ts` (`assertValidTransition`). Aplicado a Order
+      (bloquea PATCH inválido, ej. `cancelled→paid`; los pagos siguen moviendo el estado
+      solos), Reservation (`pending→confirmed→seated→completed`, cancelled/no_show
+      terminales) y Event (`draft→scheduled→published→finished`, cancelled desde
+      cualquier estado no finalizado). Promotion/Table/Customer quedan libres (flags
+      operativos, no un flujo).
+- [x] **Solapamiento de reservas** — ✅ HECHO. Una mesa no admite dos reservas activas
+      dentro de una ventana de 2h (409); cancelar/no_show libera la mesa. Verificado
+      en la UI real (el 409 se propaga con mensaje legible).
+- [x] **Unicidad de código de mesa** — ✅ HECHO. `tables`: código único por venue (409),
+      verificado a nivel de aplicación (no DB) para poder reutilizar el código tras un
+      soft-delete. `customers.documentId` se dejó **sin unique** (decisión: es opcional
+      y forzarlo podría romper flujos legítimos).
+- [x] **Paginación** — ✅ HECHO. `GET /products`, `/customers`, `/orders`, `/reservations`
+      devuelven `{data, total, page, pageSize}` (pageSize 1-100, default 20).
+      `tables`/`events`/`promotions` quedan sin paginar (listas típicamente pequeñas).
+      Frontend (`web`) actualizado para leer `.data` (pageSize=100 en catálogo/POS).
 
 ## 5. Historial de decisiones de schema (campos añadidos al scaffold)
 
@@ -145,10 +154,13 @@ remoto GitHub · frontend (login/dashboard/POS/catálogo/operación/i18n) · inf
    CRUD planes (modal). localStorage con claves propias (`aibos_admin_*`) — verificado que
    la sesión de plataforma y la de tenant **conviven sin pisarse** en pestañas distintas.
    Seed `admin@platform.com`/`demo1234`.
-8. **Endurecimiento**: máquina de estados de `status`, solapamiento de reservas,
-   uniques (`tables[venueId,code]`, `customers.documentId`), paginación en listados.
-9. **Infra**: agregar `turbo` a devDeps raíz; hooks husky (eslint/typecheck);
-   resolver `.claude/launch.json` duplicado; reconstruir imagen Docker `api` cuando aplique.
+8. ~~Endurecimiento~~ ✅ HECHO (commit `5218741`). Máquina de estados (Order/Reservation/
+   Event), solapamiento de reservas (409, ventana 2h), unicidad de código de mesa por
+   venue (409, app-level), paginación en products/customers/orders/reservations.
+   Suite e2e: **52/52**. Sin cambios de schema (todo lógica de aplicación).
+9. **[SIGUIENTE] Infra restante**: hooks husky (eslint/typecheck opcional); resolver si
+   se reconstruye la imagen Docker `api` (hoy los dev servers reemplazan ese flujo).
+   (turbo + pnpm global + launch.json ya se cerraron — ver sección 1).
 
 **Diferido / requiere indicación explícita:** gateway PayPhone, proveedor de IA,
 `AIGenerationLog`.
