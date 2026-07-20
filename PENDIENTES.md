@@ -24,11 +24,12 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
 - [x] **Remoto git + push** — ✅ HECHO (2026-07-13). Remoto `origin`:
       https://github.com/Juanpage/ai-business-os · rama `main` sincronizada.
       Recordar `git push` tras cada commit nuevo.
-- [ ] **Docker desincronizado** — los contenedores `aibos-api`/`aibos-web` están **parados**
-      a favor de los dev servers. La imagen `aibos-api` quedaría desactualizada si se
-      reconstruye. Además, al encender Docker Desktop se reinician solos
-      (`restart: unless-stopped`) y chocan con los dev servers en 3000/3001
-      → hay que pararlos con `docker compose stop api web` (dejando `postgres`).
+- [x] **Docker desincronizado** — ✅ HECHO (2026-07-20). `docker compose build api`
+      reconstruida en verde (build Nest + Prisma Client limpios). Se dejó **parada**
+      a propósito (no `up`) para no chocar con el dev server en 3001. Sigue vigente:
+      al encender Docker Desktop `api`/`web` se reinician solos (`restart:
+    unless-stopped`) → pararlos con `docker compose stop api web` (dejando
+      `postgres`) si se va a seguir usando dev servers.
 - [x] **`turbo` + `pnpm` global** — ✅ HECHO (2026-07-14, commit `9a1df4e`).
       `turbo` agregado a devDeps raíz **y pnpm instalado globalmente** (10.34.5, en el
       prefijo de usuario `AppData\Roaming\npm`, sin admin). Turbo necesitaba el binario
@@ -38,9 +39,10 @@ validaciones cruzadas): `identity(+members)`, `tenants`, `venues`, `categories`,
       fallaba con EPERM). Ya no hace falta `npx pnpm@10...`.
 - [x] **`.claude/launch.json` duplicado** — ✅ HECHO. Eliminada la copia del proyecto;
       la funcional vive en la carpeta de la sesión (que es donde `preview_start` lee).
-- [ ] **husky pre-commit mínimo** — solo corre prettier sobre archivos staged.
-      Falta (opcional): agregar eslint y/o typecheck al hook. (Ahora que turbo funciona,
-      `pnpm typecheck` en el hook sería viable, aunque encarece cada commit.)
+- [x] **husky pre-commit reforzado** — ✅ HECHO (2026-07-20). `.husky/pre-commit`
+      ahora corre `lint-staged` (prettier) **y `pnpm typecheck`** (turbo, 3 workspaces,
+      verificado en verde, ~3s). Se dejó `lint` fuera a propósito para no encarecer
+      cada commit; typecheck ya cubre el grueso de los errores de tipo.
 
 ## 2. Pendientes de negocio (features)
 
@@ -158,9 +160,12 @@ remoto GitHub · frontend (login/dashboard/POS/catálogo/operación/i18n) · inf
    Event), solapamiento de reservas (409, ventana 2h), unicidad de código de mesa por
    venue (409, app-level), paginación en products/customers/orders/reservations.
    Suite e2e: **52/52**. Sin cambios de schema (todo lógica de aplicación).
-9. **[SIGUIENTE] Infra restante**: hooks husky (eslint/typecheck opcional); resolver si
-   se reconstruye la imagen Docker `api` (hoy los dev servers reemplazan ese flujo).
-   (turbo + pnpm global + launch.json ya se cerraron — ver sección 1).
+9. ~~Infra restante~~ ✅ HECHO (2026-07-20). Hook pre-commit con typecheck + imagen
+   Docker `api` reconstruida (parada a propósito, dev servers siguen siendo el flujo activo).
+
+**Cola de desarrollo vacía** — no quedan ítems pendientes de negocio o infra abiertos.
+Próximo paso: a definir por el usuario (nueva feature, o activar alguno de los diferidos
+de abajo con indicación explícita).
 
 **Diferido / requiere indicación explícita:** gateway PayPhone, proveedor de IA,
 `AIGenerationLog`.
